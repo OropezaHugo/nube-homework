@@ -1,0 +1,8 @@
+.home-div {
+    display: flex;
+    flex-direction: column;
+    padding: 10rem;
+    background-color: aqua;
+    align-items: center;
+    
+}
