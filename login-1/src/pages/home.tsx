@@ -4,19 +4,20 @@ import { User } from "firebase/auth";
 import { createContext } from "vm";
 import {useAuth} from "../AuthContext"
 import {postService} from "../services/post-service"
+import {imageService} from "../services/image-service"
 interface IPost {
     id: string,
     text: string,
+    image: string,
     createdDate: any
 }
 export default function Home(){
     
       
     const { user, logout } = useAuth();
-    const [error, setError] = useState<string | null>(null);
-    const [success, setSuccess] = useState<string | null>(null);
     const [post, setpost] = useState<IPost[]>([]);
     const [text, settext] = useState("");
+    const [image, setimage] = useState("");
     const fetchPost = async () => {
         if (user){
             const data = await postService.getPost(user.uid);
@@ -29,16 +30,26 @@ export default function Home(){
     }, [user]);
 
     const createPost = async () => {
-        if(!text || !user) return;
-        await postService.postPost(user.uid, text);
+        if(!image || !text || !user) return;
+        await postService.postPost(user.uid, text, image);
         settext("");
         fetchPost();
     };
 
     const deletePost = async (id:string) => {
-        
         await postService.deletePost(id);
         fetchPost();
+    };
+
+    const uploadImage = async (k: React.ChangeEvent<HTMLInputElement>) => {
+        const image = k.target.files?.[0];
+        if (!image) return;
+        const url = await imageService.postImage(image);
+        if (url) {
+            setimage(url);
+        } else {
+            console.error("ni modos, no se pudo subir la imagen")
+        }
     };
 
     return(
@@ -47,13 +58,25 @@ export default function Home(){
             <h2>Posts</h2>
             <div>
                 <input type="text" placeholder="text" value={text} onChange={(a) => settext(a.target.value)}/>
+                <input type="file" accept="image/*" onChange={uploadImage} />
+                {image && (
+                    <img
+                    src={image}
+                    alt="Imagen del post"
+                    width={200}
+                    />
+                )}
                 <button onClick={createPost}>Create Post</button>
             </div>
+            
             <div>
                 {post.length === 0 && <p>No posts</p>} 
                 {post.map((x) => (
                     <div key={x.id}>
                         <p>{x.text}</p>
+                        {x.image && (
+                            <img src={x.image} alt="Imagen del post" width={200} style={{ marginTop: "10px" }} />
+                        )}
                         <small>{new Date(x.createdDate.seconds * 1000).toLocaleString()}</small>
                         <button onClick={() => deletePost(x.id)}>Delete</button>
                     </div>

@@ -12,10 +12,11 @@ import {
 
 export const postService = {
 
-    async postPost(userId: string, text: string){
+    async postPost(userId: string, text: string, image: string){
         const newPost = {
             userId,
             text,
+            image,
             createdDate: Timestamp.now(),
         };
         const postRef = await addDoc(collection(database, "Posts"), newPost);
