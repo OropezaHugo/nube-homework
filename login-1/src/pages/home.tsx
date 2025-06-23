@@ -5,6 +5,11 @@ import { createContext } from "vm";
 import {useAuth} from "../AuthContext"
 import {postService} from "../services/post-service"
 import {imageService} from "../services/image-service"
+import { useNotification } from "../services/notification";
+import { collection, getDocs } from "firebase/firestore";
+import { CallTracker } from "assert";
+import { database } from "../firebaseinit";
+import { NotificationService } from "../services/notification-service";
 interface IPost {
     id: string,
     text: string,
@@ -12,12 +17,11 @@ interface IPost {
     createdDate: any
 }
 export default function Home(){
-    
-      
     const { user, logout } = useAuth();
     const [post, setpost] = useState<IPost[]>([]);
     const [text, settext] = useState("");
     const [image, setimage] = useState("");
+    useNotification(user?.uid || "");
     const fetchPost = async () => {
         if (user){
             const data = await postService.getPost(user.uid);
@@ -25,15 +29,34 @@ export default function Home(){
         }
     };
 
+    
     useEffect(() => {
         fetchPost();
     }, [user]);
 
     const createPost = async () => {
+        
         if(!image || !text || !user) return;
-        await postService.postPost(user.uid, text, image);
-        settext("");
-        fetchPost();
+        try {
+            await postService.postPost(user.uid, text, image);
+            const userlist = await getDocs(collection(database, "Persons"));
+            const prom: Promise<void>[] = [];
+            userlist.forEach((x) => {
+                const destinyId = x.id;
+                if (destinyId !== user.uid ) {
+                    prom.push(
+                        NotificationService.Sender(destinyId)
+                    );
+                }
+            });
+            await Promise.all(prom)
+            settext("");
+            fetchPost();
+            
+        } catch (err:any) {
+           console.log("error on notifications")
+        }
+        
     };
 
     const deletePost = async (id:string) => {

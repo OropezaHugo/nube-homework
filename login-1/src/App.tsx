@@ -6,11 +6,13 @@ import Register from './pages/register';
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 import Home from './pages/home';
 import { AuthProvider } from './AuthContext';
+import { ToastContainer } from 'react-toastify';
 
 function App() {
   
   return (
     <AuthProvider>
+      <ToastContainer/>
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<Register/>} />
