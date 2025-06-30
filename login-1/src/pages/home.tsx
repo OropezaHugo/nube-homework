@@ -16,7 +16,8 @@ interface IPost {
     image: string,
     likes: number,
     dislikes: number,
-    createdDate: any
+    createdDate: any,
+    userId: string
 }
 export default function Home(){
     const { user, logout } = useAuth();
@@ -68,12 +69,12 @@ export default function Home(){
 
     const likePost = async (id:string) => {
         try {
+            const actualPost = await postService.getPostById(id)
+            if (!actualPost) return;
             await postService.likePost(id);
             fetchPost();
-            const docRef = doc(database, "Persons", id);
-            const docSnap = await getDoc(docRef);
             const prom: Promise<void>[] = [];
-            prom.push(NotificationService.SendLike(docSnap.id))
+            prom.push(NotificationService.SendLike(actualPost.userId))
             await Promise.all(prom)
             settext("");
             fetchPost();
@@ -86,12 +87,12 @@ export default function Home(){
 
     const dislikePost = async (id:string) => {
         try {
+            const actualPost = await postService.getPostById(id)
+            if (!actualPost) return;
             await postService.dislikePost(id);
             fetchPost();
-            const docRef = doc(database, "Persons", id);
-            const docSnap = await getDoc(docRef);
             const prom: Promise<void>[] = [];
-            prom.push(NotificationService.SendDislike(docSnap.id))
+            prom.push(NotificationService.SendDislike(actualPost.userId))
             await Promise.all(prom)
             settext("");
             fetchPost();

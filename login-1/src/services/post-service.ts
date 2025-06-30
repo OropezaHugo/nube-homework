@@ -17,7 +17,8 @@ interface IPost {
     image: string,
     likes: number,
     dislikes: number,
-    createdDate: any
+    createdDate: any,
+    userId: string
 }
 export const postService = {
 
