@@ -6,7 +6,7 @@ import {useAuth} from "../AuthContext"
 import {postService} from "../services/post-service"
 import {imageService} from "../services/image-service"
 import { useNotification } from "../services/notification";
-import { collection, getDocs } from "firebase/firestore";
+import { collection, doc, getDoc, getDocs } from "firebase/firestore";
 import { CallTracker } from "assert";
 import { database } from "../firebaseinit";
 import { NotificationService } from "../services/notification-service";
@@ -14,6 +14,8 @@ interface IPost {
     id: string,
     text: string,
     image: string,
+    likes: number,
+    dislikes: number,
     createdDate: any
 }
 export default function Home(){
@@ -64,6 +66,41 @@ export default function Home(){
         fetchPost();
     };
 
+    const likePost = async (id:string) => {
+        try {
+            await postService.likePost(id);
+            fetchPost();
+            const docRef = doc(database, "Persons", id);
+            const docSnap = await getDoc(docRef);
+            const prom: Promise<void>[] = [];
+            prom.push(NotificationService.SendLike(docSnap.id))
+            await Promise.all(prom)
+            settext("");
+            fetchPost();
+            
+        } catch (err:any) {
+           console.log("error on notifications")
+        }
+        
+    };
+
+    const dislikePost = async (id:string) => {
+        try {
+            await postService.dislikePost(id);
+            fetchPost();
+            const docRef = doc(database, "Persons", id);
+            const docSnap = await getDoc(docRef);
+            const prom: Promise<void>[] = [];
+            prom.push(NotificationService.SendDislike(docSnap.id))
+            await Promise.all(prom)
+            settext("");
+            fetchPost();
+            
+        } catch (err:any) {
+           console.log("error on notifications")
+        }
+    };
+
     const uploadImage = async (k: React.ChangeEvent<HTMLInputElement>) => {
         const image = k.target.files?.[0];
         if (!image) return;
@@ -102,6 +139,10 @@ export default function Home(){
                         )}
                         <small>{new Date(x.createdDate.seconds * 1000).toLocaleString()}</small>
                         <button onClick={() => deletePost(x.id)}>Delete</button>
+                        <small>{x.likes}</small>
+                        <button onClick={() => likePost(x.id)}>Like</button>
+                        <small>{x.dislikes}</small>
+                        <button onClick={() => dislikePost(x.id)}>Dislike</button>
                     </div>
                 ))}
             </div>
